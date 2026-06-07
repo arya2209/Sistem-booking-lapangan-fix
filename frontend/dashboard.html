@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MewSport</title>
+    <link rel="stylesheet" href="/frontend/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- ──── NAVBAR ──── -->
+    <div class="navbar">
+        <div class="navbar-left">
+            <div class="logo-box">
+                <img src="/frontend/img/logo.meong.png" alt="MewSport Logo">
+            </div>
+            <div class="brand-text">MewSport</div>
+        </div>
+
+        <div class="navbar-menu">
+            <div class="nav-role" id="roleBadge">MEMBER</div>
+            <button class="profile-btn" onclick="showWelcomePopup()"><i
+            class="fa-regular fa-user"></i> Profile</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- ──── WELCOME POPUP ──── -->
+    <div class="welcome-popup" id="welcomePopup">
+        <div class="popup-card">
+
+            <div class="popup-logo">
+                <img src="/frontend/img/logo.meong.png" alt>
+            </div>
+
+            <h2>Welcome Back</h2>
+
+            <p>
+                Senang melihatmu kembali,
+                <br>
+                <b id="popupUsername"></b>
+            </p>
+
+            <button onclick="closeWelcomePopup()">
+          Masuk ke Dashboard
+        </button>
+
+        </div>
+    </div>
+
+    <!-- ──── MAIN CONTAINER ──── -->
+    <div class="container">
+
+        <!-- ADMIN UI -->
+        <div id="adminUI" style="display: none">
+            <div style="text-align: center; margin-bottom: 24px">
+                <button onclick="loadData()" style="max-width: 220px"><i
+              class="fa-solid fa-rotate-right"></i> &nbsp;Refresh Data</button>
+            </div>
+
+            <div class="admin-grid">
+                <div class="card user-card">
+                    <h3>Manajemen User</h3>
+                    <ul id="userList"></ul>
+                </div>
+
+                <div class="card">
+                    <h3>Okupansi Lapangan</h3>
+                    <canvas id="okupansiChart"></canvas>
+                </div>
+
+                <div class="card">
+                    <h3>Peak Hour</h3>
+                    <canvas id="peakChart"></canvas>
+                </div>
+
+                <div class="card">
+                    <h3>Pembatalan</h3>
+                    <canvas id="cancelChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- MEMBER UI -->
+        <div id="memberUI" style="display: none">
+            <div class="card">
+                <div class="section-label">Booking Arena</div>
+                <h3>Pilih Lapangan</h3>
+                <div id="lapanganList" class="lapangan-grid"></div>
+                <input type="hidden" id="lapangan_id">
+
+                <h3>Tanggal Booking</h3>
+                <input type="date" id="tanggal" />
+
+                <h3>Waktu Mulai</h3>
+                <input type="time" id="jam_mulai" min="08:00" max="22:00" step="3600" />
+
+                <h3>Waktu Selesai</h3>
+                <input type="time" id="jam_selesai" min="08:00" max="22:00" step="3600" />
+
+                <button class="booking-main-btn" onclick="booking()">
+            <i class="fa-solid fa-bolt"></i> &nbsp;Book Sekarang
+          </button>
+            </div>
+
+            <div class="card" style="margin-top: 20px">
+                <div class="booking-header">
+                    <h3 style="margin-top: 0">Booking Saya</h3>
+                    <span class="booking-badge">Riwayat</span>
+                </div>
+                <div id="myBooking" class="booking-list"></div>
+            </div>
+        </div>
+
+        <!-- OPERATOR UI -->
+        <div id="operatorUI" style="display: none">
+            <div class="card">
+                <div class="section-label">Kelola Sesi</div>
+                <h3>Manajemen Sesi</h3>
+                <ul id="allSesi"></ul>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">©2026 MewSport — Sistem Booking Lapangan &nbsp;|&nbsp; By Arya</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // ── Chart defaults for dark theme ──
+        Chart.defaults.color = '#6b7a90';
+        Chart.defaults.borderColor = 'rgba(0,0,0,0.06)';
+
+        const CHART_COLORS = {
+            primary: 'rgba(0,87,255,0.18)',
+            primaryBorder: 'rgba(0,87,255,1)',
+            secondary: 'rgba(255,53,72,0.18)',
+            secondaryBorder: 'rgba(255,53,72,1)',
+            tertiary: 'rgba(255,140,0,0.2)',
+            tertiaryBorder: 'rgba(255,140,0,1)',
+        };
+
+        function chartOptions(label = '') {
+            return {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f1923',
+                        borderColor: 'rgba(0,87,255,0.3)',
+                        borderWidth: 1,
+                        titleColor: '#5c8bff',
+                        bodyColor: '#f0f4ff',
+                        padding: 12,
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.04)'
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Barlow Condensed'",
+                                size: 12,
+                                weight: '600'
+                            },
+                            color: '#6b7a90'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.04)'
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Barlow Condensed'",
+                                size: 12,
+                                weight: '600'
+                            },
+                            color: '#6b7a90'
+                        }
+                    }
+                }
+            };
+        }
+
+        let okupansiChart, peakChart, cancelChart;
+
+        // ── Auth ──
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "index.html";
+        }
+
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const role = payload.role;
+
+        loadWelcome();
+
+        function loadWelcome() {
+            document.getElementById("popupUsername").innerText = payload.username;
+            document.getElementById("roleBadge").innerText = payload.role.toUpperCase();
+            document.getElementById("welcomePopup").style.display = "flex";
+        }
+
+        function showWelcomePopup() {
+            document.getElementById("welcomePopup").style.display = "flex";
+        }
+
+        function closeWelcomePopup() {
+            document.getElementById("welcomePopup").style.display = "none";
+        }
+
+        // ── Lapangan ──
+        async function loadLapangan() {
+            try {
+                const res = await fetch("http://localhost:3000/api/lapangan", {
+                    headers: {
+                        Authorization: token
+                    },
+                });
+                if (!res.ok) throw new Error("Gagal load lapangan");
+                const data = await res.json();
+                const container = document.getElementById("lapanganList");
+                container.innerHTML = "";
+                data.forEach((lapangan) => {
+                    container.innerHTML += `
+                        <div class="lapangan-card" onclick="pilihLapangan(${lapangan.id}, this)">
+                            <img src="${getLapanganImage(lapangan.nama)}" alt="${lapangan.nama}" loading="lazy">
+                            <div class="lapangan-info">
+                                <h4>${lapangan.nama}</h4>
+                                <p>Klik untuk memilih</p>
+                            </div>
+                        </div>`;
+                });
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function pilihLapangan(id, element) {
+            document.getElementById("lapangan_id").value = id;
+            document.querySelectorAll(".lapangan-card").forEach(c => c.classList.remove("active"));
+            element.classList.add("active");
+        }
+
+        function getLapanganImage(nama) {
+            nama = nama.toLowerCase();
+            if (nama.includes("futsal"))
+                return "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=800&auto=format&fit=crop";
+            if (nama.includes("badminton"))
+                return "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=800&auto=format&fit=crop";
+            if (nama.includes("basket"))
+                return "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=800&auto=format&fit=crop";
+            return "https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=800&auto=format&fit=crop";
+        }
+
+        // ── Admin ──
+        function loadAdmin() {
+            loadData();
+            loadUsers();
+        }
+
+        async function loadData() {
+            const [okupansi, peak, cancel] = await Promise.all([
+                fetch("http://localhost:3000/api/jadwal/okupansi").then(r => r.json()),
+                fetch("http://localhost:3000/api/jadwal/peak-hour").then(r => r.json()),
+                fetch("http://localhost:3000/api/jadwal/pembatalan").then(r => r.json()),
+            ]);
+
+            if (okupansiChart) okupansiChart.destroy();
+            if (peakChart) peakChart.destroy();
+            if (cancelChart) cancelChart.destroy();
+
+            const opts = chartOptions();
+
+            okupansiChart = new Chart(document.getElementById("okupansiChart"), {
+                type: "bar",
+                data: {
+                    labels: okupansi.map(x => "Lapangan " + x.lapangan_id),
+                    datasets: [{
+                        data: okupansi.map(x => x.total),
+                        backgroundColor: CHART_COLORS.primary,
+                        borderColor: CHART_COLORS.primaryBorder,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    }]
+                },
+                options: opts
+            });
+
+            peakChart = new Chart(document.getElementById("peakChart"), {
+                type: "bar",
+                data: {
+                    labels: peak.map(x => x.jam_mulai),
+                    datasets: [{
+                        data: peak.map(x => x.total),
+                        backgroundColor: CHART_COLORS.tertiary,
+                        borderColor: CHART_COLORS.tertiaryBorder,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    }]
+                },
+                options: opts
+            });
+
+            cancelChart = new Chart(document.getElementById("cancelChart"), {
+                type: "line",
+                data: {
+                    labels: cancel.map(x => x.tanggal),
+                    datasets: [{
+                        data: cancel.map(x => x.total),
+                        borderColor: CHART_COLORS.secondaryBorder,
+                        backgroundColor: CHART_COLORS.secondary,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: CHART_COLORS.secondaryBorder,
+                        pointRadius: 4,
+                    }]
+                },
+                options: opts
+            });
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch("http://localhost:3000/api/users", {
+                    headers: {
+                        Authorization: token
+                    },
+                });
+                if (!res.ok) throw new Error("Gagal load user");
+                const data = await res.json();
+                document.getElementById("userList").innerHTML = data.map(x => `
+                    <li>
+                        <span style="flex:1;font-weight:600">${x.username}</span>
+                        <span style="font-size:11px;font-family:'Barlow Condensed';letter-spacing:1.5px;color:var(--text2)">${x.role.toUpperCase()}</span>
+                        <select onchange="ubahRole(${x.id}, this.value)">
+                            <option value="member" ${x.role === "member" ? "selected" : ""}>member</option>
+                            <option value="operator" ${x.role === "operator" ? "selected" : ""}>operator</option>
+                            <option value="admin" ${x.role === "admin" ? "selected" : ""}>admin</option>
+                        </select>
+                    </li>`).join("");
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ── Member ──
+        async function loadMember() {
+            document.getElementById("memberUI").style.display = "block";
+            try {
+                const res = await fetch("http://localhost:3000/api/jadwal/my", {
+                    headers: {
+                        Authorization: token
+                    },
+                });
+                if (!res.ok) throw new Error("Gagal load booking");
+                const data = await res.json();
+                const el = document.getElementById("myBooking");
+                el.innerHTML = data.map(x => {
+                            let sc = "",
+                                itemClass = "";
+                            if (x.status === "booked") {
+                                sc = "status-booked";
+                                itemClass = "has-booked";
+                            } else if (x.status === "ongoing") {
+                                sc = "status-ongoing";
+                                itemClass = "has-ongoing";
+                            } else if (x.status === "done") {
+                                sc = "status-done";
+                                itemClass = "has-done";
+                            } else if (x.status === "cancelled") {
+                                sc = "status-cancelled";
+                                itemClass = "has-cancelled";
+                            }
+                            return `
+                        <div class="booking-item ${itemClass}">
+                            <div class="booking-top">
+                                <div class="booking-date">${formatTanggal(x.tanggal)}</div>
+                                <div class="booking-status ${sc}">${x.status}</div>
+                            </div>
+                            <div class="booking-time"><i class="fa-regular fa-clock"></i> ${formatJam(x.jam_mulai)} — ${formatJam(x.jam_selesai)}</div>
+                            ${x.status === "booked"
+                                ? `<button class="cancel-btn" onclick="cancel(${x.id})"><i class="fa-solid fa-xmark"></i> &nbsp;Cancel Booking</button>`
+                                : ""}
+                        </div>`;
+                }).join("");
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ── Operator ──
+        async function loadOperator() {
+            document.getElementById("operatorUI").style.display = "block";
+            try {
+                const res = await fetch("http://localhost:3000/api/jadwal/all", {
+                    headers: { Authorization: token },
+                });
+                if (!res.ok) throw new Error("Gagal load sesi");
+                const data = await res.json();
+                document.getElementById("allSesi").innerHTML = data.map(x => {
+                    const statusColor = x.status === "done" ? "#22c55e"
+                        : x.status === "ongoing" ? "#ffe600"
+                        : x.status === "cancelled" ? "#ff3d57"
+                        : "var(--text2)";
+                    return `<li>
+                        <span><b>User:</b> ${x.username}</span>
+                        <span>${formatTanggal(x.tanggal)} &nbsp;·&nbsp; ${formatJam(x.jam_mulai)} — ${formatJam(x.jam_selesai)}</span>
+                        <span style="font-family:'Barlow Condensed';font-size:12px;font-weight:800;letter-spacing:2px;color:${statusColor}">${x.status.toUpperCase()}</span>
+                        ${x.status === "booked" ? `<button onclick="start(${x.id})"><i class="fa-solid fa-play"></i> Start Sesi</button>` : ""}
+                        ${x.status === "ongoing" ? `<button onclick="done(${x.id})" style="background:var(--accent3);color:var(--bg)"><i class="fa-solid fa-check"></i> Selesai</button>` : ""}
+                    </li>`;
+                }).join("");
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ── Role routing ──
+        if (role === "admin") {
+            document.getElementById("adminUI").style.display = "block";
+            loadAdmin();
+        } else if (role === "member") {
+            loadMember();
+            loadLapangan();
+        } else if (role === "operator") {
+            loadOperator();
+        }
+
+        // ── Booking ──
+        async function booking() {
+            try {
+                const res = await fetch("http://localhost:3000/api/jadwal", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: token },
+                    body: JSON.stringify({
+                        lapangan_id: parseInt(document.getElementById("lapangan_id").value),
+                        tanggal: document.getElementById("tanggal").value,
+                        jam_mulai: document.getElementById("jam_mulai").value,
+                        jam_selesai: document.getElementById("jam_selesai").value,
+                    }),
+                });
+                const result = await res.json();
+                if (!res.ok) { alert(result.message || "Booking gagal"); return; }
+                alert("Booking berhasil!");
+                loadMember();
+                loadData();
+            } catch (err) {
+                alert("Terjadi error");
+            }
+        }
+
+        async function cancel(id) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/jadwal/cancel/${id}`, {
+                    method: "PUT",
+                    headers: { Authorization: token },
+                });
+                if (!res.ok) { alert("Cancel gagal: " + await res.text()); return; }
+                alert("Berhasil cancel");
+                loadMember();
+            } catch (err) { alert("Error cancel"); }
+        }
+
+        async function start(id) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/jadwal/start/${id}`, {
+                    method: "PUT",
+                    headers: { Authorization: token },
+                });
+                if (!res.ok) { alert("Start gagal: " + await res.text()); return; }
+                alert("Sesi dimulai");
+                loadOperator();
+            } catch (err) { alert("Error start"); }
+        }
+
+        async function done(id) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/jadwal/done/${id}`, {
+                    method: "PUT",
+                    headers: { Authorization: token },
+                });
+                if (!res.ok) { alert("Done gagal: " + await res.text()); return; }
+                alert("Sesi selesai");
+                loadOperator();
+            } catch (err) { alert("Error done"); }
+        }
+
+        // ── Helpers ──
+        function formatTanggal(tanggal) {
+            const d = new Date(tanggal);
+            return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+        }
+
+        function formatJam(jam) { return jam.substring(0, 5); }
+    </script>
+</body>
+
+</html>
