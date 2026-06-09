@@ -21,8 +21,6 @@
 
         <div class="navbar-menu">
             <div class="nav-role" id="roleBadge">MEMBER</div>
-            <button class="profile-btn" onclick="showWelcomePopup()"><i
-            class="fa-regular fa-user"></i> Profile</button>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
@@ -35,17 +33,15 @@
                 <img src="/frontend/img/logo.meong.png" alt>
             </div>
 
-            <h2>Welcome Back</h2>
+            <h2>Welcome!</h2>
 
             <p>
-                Senang melihatmu kembali,
-                <br>
-                <b id="popupUsername"></b>
+                Senang melihatmu, <b id="popupUsername"></b>
             </p>
 
             <button onclick="closeWelcomePopup()">
-          Masuk ke Dashboard
-        </button>
+                    Masuk ke Dashboard
+                </button>
 
         </div>
     </div>
@@ -57,7 +53,8 @@
         <div id="adminUI" style="display: none">
             <div style="text-align: center; margin-bottom: 24px">
                 <button onclick="loadData()" style="max-width: 220px"><i
-              class="fa-solid fa-rotate-right"></i> &nbsp;Refresh Data</button>
+                            class="fa-solid fa-rotate-right"></i> &nbsp;Refresh
+                        Data</button>
             </div>
 
             <div class="admin-grid">
@@ -101,8 +98,8 @@
                 <input type="time" id="jam_selesai" min="08:00" max="22:00" step="3600" />
 
                 <button class="booking-main-btn" onclick="booking()">
-            <i class="fa-solid fa-bolt"></i> &nbsp;Book Sekarang
-          </button>
+                        <i class="fa-solid fa-bolt"></i> &nbsp;Book Sekarang
+                    </button>
             </div>
 
             <div class="card" style="margin-top: 20px">
@@ -497,6 +494,36 @@
                 loadOperator();
             } catch (err) { alert("Error done"); }
         }
+
+        async function ubahRole(id, role) {
+    try {
+        const res = await fetch(
+            `http://localhost:3000/api/users/${id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token
+                },
+                body: JSON.stringify({ role })
+            }
+        );
+
+        const result = await res.json();
+
+        if (!res.ok) {
+            alert(result.message || "Gagal mengubah role");
+            return;
+        }
+
+        alert("Role berhasil diubah");
+        loadUsers();
+
+    } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan");
+    }
+}
 
         // ── Helpers ──
         function formatTanggal(tanggal) {

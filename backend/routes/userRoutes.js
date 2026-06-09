@@ -5,30 +5,40 @@ const auth = require('../middleware/auth');
 
 /* GET ALL USERS (ADMIN) */
 router.get('/', auth(['admin']), (req, res) => {
-  db.query('SELECT id, username, role FROM users', (err, result) => {
-    if (err) return res.send(err);
-    res.json(result);
-  });
+    db.query('SELECT id, username, role FROM users', (err, result) => {
+        if (err) return res.send(err);
+        res.json(result);
+    });
 });
 
 /* UPDATE USER */
 router.put('/:id', auth(['admin']), (req, res) => {
-  const { username, role } = req.body;
+    const { role } = req.body;
 
-  db.query(
-    'UPDATE users SET username=?, role=? WHERE id=?',
-    [username, role, req.params.id],
-    () => res.send('User diupdate')
-  );
+    db.query(
+        'UPDATE users SET role=? WHERE id=?', [role, req.params.id],
+        (err) => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: err.message
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'User diupdate'
+            });
+        }
+    );
 });
 
 /* DELETE USER */
 router.delete('/:id', auth(['admin']), (req, res) => {
-  db.query(
-    'DELETE FROM users WHERE id=?',
-    [req.params.id],
-    () => res.send('User dihapus')
-  );
+    db.query(
+        'DELETE FROM users WHERE id=?', [req.params.id],
+        () => res.send('User dihapus')
+    );
 });
 
 module.exports = router;

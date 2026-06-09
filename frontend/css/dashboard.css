@@ -283,6 +283,11 @@ body::before {
     box-shadow: 0 10px 24px rgba(0, 87, 255, 0.25);
     position: relative;
     z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    margin: auto;
 }
 
 .popup-card button:hover {
@@ -780,17 +785,21 @@ canvas {
 /* Refresh btn */
 
 #adminUI>div>button[onclick="loadData()"] {
-    background: #eef2ff;
+    background: #426eff;
     border: 1.5px solid rgba(0, 87, 255, 0.2);
-    color: var(--accent);
+    color: white;
     max-width: 220px;
     letter-spacing: 0.4px;
     font-size: 13px;
     box-shadow: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
 }
 
 #adminUI>div>button[onclick="loadData()"]:hover {
-    background: #dde5ff;
+    background: #3451b1;
     box-shadow: 0 4px 14px rgba(0, 87, 255, 0.12);
 }
 
